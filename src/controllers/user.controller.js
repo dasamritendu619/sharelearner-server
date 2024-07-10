@@ -141,17 +141,17 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const verifyUser = asyncHandler(async (req, res) => {
     // get otp from req.body
-    const { otp, email } = req.body;
+    const { otp, identifier } = req.body;
     // check if otp exists or not
     if (!otp) {
         throw new ApiError(400, "OTP is required");
     }
     // check if email exists or not
-    if (!email) {
-        throw new ApiError(400, "Email is required");
+    if (!identifier) {
+        throw new ApiError(400, "Identifier is required");
     }
     // find user by otp
-    const user = await User.findOne({ loginOTP: otp, email: email });
+    const user = await User.findOne({ loginOTP: otp, $or: [{ email: identifier }, { username: identifier }]}).select("-password -refreshToken");
     // if user not found
     if (!user) {
         throw new ApiError(404, "Invalid OTP ");

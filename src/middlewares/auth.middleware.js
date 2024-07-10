@@ -22,7 +22,7 @@ const verifyJWT = asyncHandler(async(req,res,next)=>{
         // check if token is valid
         if (!decodedToken) throw new ApiError(403,"Unauthorized request");
         // find user
-        const user = await User.findOne({$and:[{_id:new mongoose.Types.ObjectId(decodedToken?._id)},{refreshToken:refreshToken}]}).select("-password -refreshToken");
+        const user = await User.findOne({$and:[{_id:new mongoose.Types.ObjectId(decodedToken?._id)},{refreshToken:refreshToken}]}).select("email username fullname _id");
         // check if user exists
         if (!user) {
             throw new ApiError(403,"Unauthorized request");
