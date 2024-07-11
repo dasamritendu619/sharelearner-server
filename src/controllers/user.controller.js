@@ -151,7 +151,7 @@ const verifyUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Identifier is required");
     }
     // find user by otp
-    const user = await User.findOne({ loginOTP: otp, $or: [{ email: identifier }, { username: identifier }]}).select("-password -refreshToken");
+    const user = await User.findOne({ loginOTP: otp, $or: [{ email: identifier }, { username: identifier }]}).select("-password");
     // if user not found
     if (!user) {
         throw new ApiError(404, "Invalid OTP ");
