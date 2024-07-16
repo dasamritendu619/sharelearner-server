@@ -324,6 +324,7 @@ const changePassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid password");
     }
     user.password = newPassword;
+    user.refreshToken = [req.refreshToken];
     const savedUser=await user.save();
     if (!savedUser) {
         throw new ApiError(500, "Something went wrong while changing password");
@@ -564,6 +565,18 @@ const checkUserNameAvialability=asyncHandler(async (req,res)=>{
         .json(new ApiResponce(200, {}, "Username available"));
 });
 
+const getCurrentUserDetails = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    user.refreshToken = undefined;
+    user.password = undefined;
+    return res
+        .status(200)
+        .json(new ApiResponce(200, user, "User found"));
+})
+
 export {
     registerUser,
     verifyUser,
@@ -580,5 +593,5 @@ export {
     updateAvatar,
     updateCoverPhoto,
     checkUserNameAvialability,
-
+    getCurrentUserDetails,
 }

@@ -29,6 +29,7 @@ const verifyJWT = asyncHandler(async(req,res,next)=>{
         }
         // set user to req.user
         req.user = user;
+        req.refreshToken = refreshToken;
         return next();
 
     } catch (error) {
