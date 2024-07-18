@@ -67,11 +67,9 @@ const userSchema = new mongoose.Schema({
             type: String
         }
     ],
-    interest: [
-        {
-            type: String
-        }
-    ],
+    interest: {
+        type: String
+    },
     loginOTP: {
         type: String
     },

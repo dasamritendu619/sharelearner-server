@@ -459,7 +459,7 @@ const updateUserDetails=asyncHandler(async (req,res)=>{
     }
 
     user.fullName=fullName || user.fullName;
-    user.dob=dob || user.dob;
+    user.dob=dob ? new Date(dob) : user.dob;
     user.gender=gender || user.gender;
     user.education=education || user.education;
     user.about=about || user.about;
