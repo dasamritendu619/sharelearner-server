@@ -6,6 +6,7 @@ import { ApiResponce } from "../utils/ApiResponse.js";
 import { sendMail } from "../utils/resend.js";
 import { DEFAULT_AVATAR,DEFAULT_COVER_PHOTO} from "../constants.js" 
 import {deleteFromCloudinary} from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
 
 function isStrongPassword(password) {
     // Check if password length is at least 8 characters

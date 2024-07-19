@@ -11,7 +11,7 @@ const uploadOnCloudinary = async (filePath) => {
     try {
         if (!filePath) return null;
         // Upload image on cloudinary
-        const responce = await cloudinary.uploader.upload(filePath,{resource_type:"auto",folder:"/codeweb"})
+        const responce = await cloudinary.uploader.upload(filePath,{resource_type:"auto",folder:"/sharelearner"});
         // Remove image from local storage
         fs.unlinkSync(filePath);
         return responce;

@@ -1,0 +1,72 @@
+imag responce
+{
+  asset_id: '67bfe4b0cc5c69369f32bb1c1c53e17f',
+  public_id: 'codeweb/ibfydgyxepwalisqerz4',
+  version: 1721381776,
+  version_id: 'ff12f6a65c23b2eba05102922432f82a',
+  signature: '91be2c23d9828e797d87ce2f11bad709f9522327',
+  width: 1200,
+  height: 600,
+  format: 'jpg',
+  resource_type: 'image',
+  created_at: '2024-07-19T09:36:16Z',
+  tags: [],
+  bytes: 125740,
+  type: 'upload',
+  etag: '470e02bdbb51f94cf1ac03b7dad3224f',
+  placeholder: false,
+  url: 'http://res.cloudinary.com/dqufodszt/image/upload/v1721381776/codeweb/ibfydgyxepwalisqerz4.jpg',
+  secure_url: 'https://res.cloudinary.com/dqufodszt/image/upload/v1721381776/codeweb/ibfydgyxepwalisqerz4.jpg', 
+  folder: 'codeweb',
+  original_filename: 'asset-1721381772492-298497060',
+  api_key: '561711438852175'
+}
+
+
+
+{
+  asset_id: '36252afdcc12e3b165dbad2a535f4e60',
+  public_id: 'sharelearner/up54wqpypnnhzgboqajc',
+  version: 1721382531,
+  version_id: '5124cdc4d56726152cc50e78041387ef',
+  signature: 'e953f6de325f64b652c6af23822f965abd476d2a',
+  width: 1920,
+  height: 1080,
+  format: 'mp4',
+  resource_type: 'video',
+  created_at: '2024-07-19T09:48:51Z',
+  tags: [],
+  pages: 0,
+  bytes: 28661543,
+  type: 'upload',
+  etag: 'fa62a3bddfaad419e4fb27079b0d20ef',
+  placeholder: false,
+  url: 'http://res.cloudinary.com/dqufodszt/video/upload/v1721382531/sharelearner/up54wqpypnnhzgboqajc.mp4',    
+  secure_url: 'https://res.cloudinary.com/dqufodszt/video/upload/v1721382531/sharelearner/up54wqpypnnhzgboqajc.mp4',
+  playback_url: 'https://res.cloudinary.com/dqufodszt/video/upload/sp_auto/v1721382531/sharelearner/up54wqpypnnhzgboqajc.m3u8',
+  folder: 'sharelearner',
+  audio: {
+    codec: 'aac',
+    bit_rate: '128016',
+    frequency: 48000,
+    channels: 1,
+    channel_layout: 'mono'
+  },
+  video: {
+    pix_format: 'yuv420p',
+    codec: 'h264',
+    level: 41,
+    profile: 'High',
+    bit_rate: '17048871',
+    dar: '16:9',
+    time_base: '1/90000'
+  },
+  is_audio: false,
+  frame_rate: 30,
+  bit_rate: 17676246,
+  duration: 12.971778,
+  rotation: 0,
+  original_filename: 'asset-1721382465844-763196956',
+  nb_frames: 389,
+  api_key: '561711438852175'
+}

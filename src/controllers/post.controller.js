@@ -26,7 +26,7 @@ const createPost = asyncHandler(async (req, res) => {
             post = await Post.create({
                 title,
                 type,
-                visibility,
+                visibility:visibility || "public",
                 assetURL:uploadedImage.secure_url,
                 author:new mongoose.Types.ObjectId(req.user._id)
             });
@@ -45,10 +45,11 @@ const createPost = asyncHandler(async (req, res) => {
             if(!uploadedVideo){
                 throw new ApiError(500, "Failed to upload video on cloudinary");
             }
+            console.log(uploadedVideo)
             post = await Post.create({
                 title,
                 type,
-                visibility,
+                visibility:visibility || "public",
                 assetURL:uploadedVideo.secure_url,
                 author:new mongoose.Types.ObjectId(req.user._id)
             });
@@ -69,7 +70,7 @@ const createPost = asyncHandler(async (req, res) => {
             post= await Post.create({
                 title,
                 type,
-                visibility,
+                visibility:visibility || "public",
                 assetURL:uploadedPdf.secure_url,
                 author:new mongoose.Types.ObjectId(req.user._id)
             });
@@ -93,7 +94,7 @@ const createPost = asyncHandler(async (req, res) => {
                 title,
                 content,
                 type,
-                visibility,
+                visibility:visibility || "public",
                 author:new mongoose.Types.ObjectId(req.user._id)
             });
             if(!post){
