@@ -45,7 +45,6 @@ const createPost = asyncHandler(async (req, res) => {
             if(!uploadedVideo){
                 throw new ApiError(500, "Failed to upload video on cloudinary");
             }
-            console.log(uploadedVideo)
             post = await Post.create({
                 title,
                 type,
@@ -222,6 +221,23 @@ const deletePost = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponce(200,{}, "Post deleted successfully"));
 
+});
+
+const getPostDetailsForUpdate = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    if(!postId){
+        throw new ApiError(400, "Post id is required");
+    }
+    const post = await Post.findById(postId);
+    if(!post){
+        throw new ApiError(404, "Post not found");
+    }
+    if(post.author.toString() !== req.user._id.toString()){
+        throw new ApiError(403, "You are not authorized to update this post");
+    }
+    return res
+    .status(200)
+    .json(new ApiResponce(200,post, "Post fetched successfully"));
 });
 
 const getPost = asyncHandler(async (req, res) => {
@@ -540,5 +556,5 @@ export {
     deletePost,
     getPost,
     getAllPosts,
-
+    getPostDetailsForUpdate,
 }

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const postSchema = new mongoose.Schema({
-    tilte: {
+    title: {
         type: String,
         text: "index"
     },

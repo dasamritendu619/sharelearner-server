@@ -6,7 +6,8 @@ import {
     updatePost,
     deletePost,
     getPost,
-    getAllPosts
+    getAllPosts,
+    getPostDetailsForUpdate
  } from "../controllers/post.controller.js";
 import { verifyJWT , checkCurrentUser} from "../middlewares/auth.middleware.js";
 
@@ -19,5 +20,6 @@ router.route("/update/:postId").patch(verifyJWT, updatePost);
 router.route("/delete/:postId").delete(verifyJWT, deletePost);
 router.route("/get/:postId").get(checkCurrentUser, getPost);
 router.route("/get-all").get(checkCurrentUser, getAllPosts);
+router.route("/get-update/:postId").get(verifyJWT, getPostDetailsForUpdate);
 
 export default router;
