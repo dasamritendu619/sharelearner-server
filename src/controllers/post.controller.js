@@ -365,7 +365,7 @@ const getPost = asyncHandler(async (req, res) => {
     }
     return res
     .status(200)
-    .json(new ApiResponce(200,post, "Post fetched successfully"));
+    .json(new ApiResponce(200,post[0], "Post fetched successfully"));
 
 });
 
