@@ -247,6 +247,7 @@ const getPost = asyncHandler(async (req, res) => {
     }
     let isFollowedByMe = false;
     let isLikedByMe = false;
+    let isSavedByMe = false;
     if(req.user){
         isFollowedByMe = {
             $cond:{
@@ -266,12 +267,29 @@ const getPost = asyncHandler(async (req, res) => {
                 else: false
             }
         }
+        isSavedByMe = {
+            $cond: {
+                if: {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$saved.savedBy"]
+                },
+                then: true,
+                else: false
+            }
+        }
     }
 
     const post = await Post.aggregate([
         {
             $match:{
                 _id:new mongoose.Types.ObjectId(postId)
+            }
+        },
+        {
+            $lookup:{
+                from:"saveds",
+                localField:"_id",
+                foreignField:"post",
+                as:"saved"
             }
         },
         {
@@ -346,17 +364,22 @@ const getPost = asyncHandler(async (req, res) => {
                 sharesCount:{
                     $size:"$share"
                 },
+                savedCount:{
+                    $size:"$saved"
+                },
                 author:{
                     $arrayElemAt:["$author",0]
                 },
-                isLikedByMe:isLikedByMe
+                isLikedByMe:isLikedByMe,
+                isSavedByMe:isSavedByMe
             }
         },
         {
             $project:{
                 likes:0,
                 comments:0,
-                share:0
+                share:0,
+                saved:0
             }
         }
     ]);
