@@ -303,7 +303,7 @@ const getPost = asyncHandler(async (req, res) => {
                         $lookup:{
                             from:"followers",
                             localField:"_id",
-                            foreignField:"following",
+                            foreignField:"profile",
                             as:"followers"
                         }
                     },

@@ -139,7 +139,7 @@ const getallComments = asyncHandler(async (req, res) => {
             $addFields:{
                 totalLikes: {$size: "$likes"},
                 totalReplies: {$size: "$replies"},
-                isLikeByMe: {
+                isLikedByMe: {
                     $cond: {
                         if: {
                             $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.likedBy"]
