@@ -11,6 +11,9 @@ const toggleFollowUser = asyncHandler(async (req, res) => {
     if(!profileId){
         throw new ApiError(400, "Profile id is required");
     }
+    if (profileId === req.user._id.toString()) {
+        throw new ApiError(400, "You can't follow yourself");   
+    }
     const profile = await User.findById(profileId);
     if(!profile){
         throw new ApiError(404, "Profile not found");

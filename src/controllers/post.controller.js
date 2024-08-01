@@ -354,6 +354,24 @@ const getPost = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup:{
+                from:"posts",
+                localField:"forkedFrom",
+                foreignField:"_id",
+                as:"forkedFrom",
+                pipeline:[
+                    {
+                        $project:{
+                            assetURL:1,
+                            title:1,
+                            content:1,
+                            type:1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
             $addFields:{
                 likesCount:{
                     $size:"$likes"
