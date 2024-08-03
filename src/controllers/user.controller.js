@@ -246,18 +246,15 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-    if (!req.user) {
+    if (!req.user || ! req.refreshToken) {
         throw new ApiError(401, "Unauthorized");
     }
-    const { token, fromAllDervice = "" } = req.query;
+    const { fromAllDervice = "" } = req.query;
     if (fromAllDervice) {
         await User.findByIdAndUpdate(req.user._id, { refreshToken: [] });
 
     } else {
-        if (!token) {
-            throw new ApiError(400, "Token is required");
-        }
-        await User.findByIdAndUpdate(req.user._id, { $pull: { refreshToken: token } });
+        await User.findByIdAndUpdate(req.user._id, { $pull: { refreshToken: req.refreshToken } });
     }
     const options = {
         httpOnly: true,
