@@ -119,10 +119,16 @@ const forkPost = asyncHandler(async (req, res) => {
     if(!post){
         throw new ApiError(404, "Post not found");
     }
+    if (req.user._id.toString() === post.author.toString()) {
+        throw new ApiError(400, "You can not fork your own post");
+    }
     if (post.forkedFrom) {
         const originalPost = await Post.findById(post.forkedFrom);
         if(!originalPost){
             throw new ApiError(404, "Original post not found");
+        }
+        if (req.user._id.toString() === originalPost.author.toString()) {
+            throw new ApiError(400, "You can not fork your own post");
         }
         const forkedPost = await Post.create({
             title,
@@ -411,10 +417,17 @@ const getPost = asyncHandler(async (req, res) => {
 });
 
 const getAllPosts = asyncHandler(async (req, res) => {
-    const { page=1,limit=10,type='all' } = req.query;
+    const { page=1,limit=10,type='all',visibility='public' } = req.query;
     let isFollowedByMe = false;
     let isLikedByMe = false;
-    let match = {};
+    let match = {
+        $match:{
+            type:{
+                $in:["photo","video","pdf","blog","forked"]
+            },
+            visibility:visibility
+        }
+    };
     if(req.user){
         isFollowedByMe = {
             $cond:{
@@ -439,7 +452,8 @@ const getAllPosts = asyncHandler(async (req, res) => {
     if(type === "photo" || type === "video" || type === "pdf" || type === "blog" || type === "forked"){
         match = {
             $match:{
-                type:type
+                type:type,
+                visibility:visibility
             }
         };
     }
