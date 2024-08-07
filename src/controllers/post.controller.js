@@ -209,6 +209,7 @@ const deletePost = asyncHandler(async (req, res) => {
     }
     if(post.type === "photo" || post.type === "video" || post.type === "pdf"){
         const deletedPost= await deleteFromCloudinary(post.assetURL.split("upload/")[1].split(".")[0]);
+        console.log(deletedPost);
         if(!deletedPost){
             throw new ApiError(500, "Failed to delete post");
         }
@@ -367,11 +368,38 @@ const getPost = asyncHandler(async (req, res) => {
                 as:"forkedFrom",
                 pipeline:[
                     {
+                        $lookup:{
+                            from:"users",
+                            localField:"author",
+                            foreignField:"_id",
+                            as:"author",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        username:1,
+                                        avatar:1,
+                                        fullName:1
+                                    }
+                                }
+                            ]
+                        },
+                    },
+                    {
+                        $addFields:{
+                            author:{
+                                $arrayElemAt:["$author",0]
+                            }
+                        }
+                    },
+                    {
                         $project:{
                             assetURL:1,
                             title:1,
                             content:1,
                             type:1,
+                            author:1,
+                            visibility:1,
+                            createdAt:1
                         }
                     }
                 ]
@@ -420,6 +448,7 @@ const getAllPosts = asyncHandler(async (req, res) => {
     const { page=1,limit=10,type='all',visibility='public' } = req.query;
     let isFollowedByMe = false;
     let isLikedByMe = false;
+    let isSavedByMe = false;
     let match = {
         $match:{
             type:{
@@ -447,6 +476,15 @@ const getAllPosts = asyncHandler(async (req, res) => {
                 else: false
             }
         };
+        isSavedByMe = {
+            $cond: {
+                if: {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$saved.savedBy"]
+                },
+                then: true,
+                else: false
+            }
+        }
     }
 
     if(type === "photo" || type === "video" || type === "pdf" || type === "blog" || type === "forked"){
@@ -463,6 +501,14 @@ const getAllPosts = asyncHandler(async (req, res) => {
         {
             $sort:{
                 createdAt:-1
+            }
+        },
+        {
+            $lookup:{
+                from:"saveds",
+                localField:"_id",
+                foreignField:"post",
+                as:"saved"
             }
         },
         {
@@ -557,6 +603,17 @@ const getAllPosts = asyncHandler(async (req, res) => {
                             }
                         }
                     },
+                    {
+                        $project:{
+                            assetURL:1,
+                            title:1,
+                            content:1,
+                            type:1,
+                            author:1,
+                            visibility:1,
+                            createdAt:1
+                        }
+                    }
                 ]
             }
         },
@@ -571,10 +628,14 @@ const getAllPosts = asyncHandler(async (req, res) => {
                 sharesCount:{
                     $size:"$share"
                 },
+                savedCount:{
+                    $size:"$saved"
+                },
                 author:{
                     $arrayElemAt:["$author",0]
                 },
                 isLikedByMe:isLikedByMe,
+                isSavedByMe:isSavedByMe,
                 forkedFrom:{
                     $arrayElemAt:["$forkedFrom",0]
                 }
@@ -584,7 +645,8 @@ const getAllPosts = asyncHandler(async (req, res) => {
             $project:{
                 likes:0,
                 comments:0,
-                share:0
+                share:0,
+                saved:0
             }
         }
         
