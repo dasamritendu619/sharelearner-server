@@ -90,20 +90,9 @@ const getAllFollowers = asyncHandler(async (req, res) => {
                         }
                     },
                     {
-                        $lookup:{
-                            from:"posts",
-                            localField:"_id",
-                            foreignField:"author",
-                            as:"posts"
-                        }
-                    },
-                    {
                         $addFields:{
                             followersCount:{
                                 $size:"$followers"
-                            },
-                            postCount:{
-                                $size:"$posts"
                             },
                             isFollowedByMe:isFollowedByMe,
                         }
@@ -116,7 +105,6 @@ const getAllFollowers = asyncHandler(async (req, res) => {
                             avatar:1,
                             followersCount:1,
                             isFollowedByMe:1,
-                            postCount:1
                         }
                     }
                 ]
@@ -206,20 +194,9 @@ const getAllFollowings = asyncHandler(async (req, res) => {
                         }
                     },
                     {
-                        $lookup:{
-                            from:"posts",
-                            localField:"_id",
-                            foreignField:"author",
-                            as:"posts"
-                        }
-                    },
-                    {
                         $addFields:{
                             followersCount:{
                                 $size:"$followers"
-                            },
-                            postCount:{
-                                $size:"$posts"
                             },
                             isFollowedByMe:isFollowedByMe,
                         }
@@ -232,7 +209,6 @@ const getAllFollowings = asyncHandler(async (req, res) => {
                             avatar:1,
                             followersCount:1,
                             isFollowedByMe:1,
-                            postCount:1
                         }
                     }
                 ]
@@ -267,8 +243,103 @@ const getAllFollowings = asyncHandler(async (req, res) => {
             .json(new ApiResponce(200,following, 'Following fetched successfully'));
 });
 
+const getSuggestedProfiles = asyncHandler(async (req, res) => {
+    const {page=1, limit=20} = req.query;
+   
+    const profile = req.user;
+
+    if(!profile){
+        throw new ApiError(404, "Profile not found");
+    }
+
+    const aggregate = Follower.aggregate([
+        {
+            $match: {
+                followedBy: {
+                    $ne: profile._id
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'profile',
+                foreignField: '_id',
+                as: 'profile',
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"followers",
+                            localField:"_id",
+                            foreignField:"profile",
+                            as:"followers"
+                        }
+                    },
+                    {
+                        $addFields:{
+                            followersCount:{
+                                $size:"$followers"
+                            },
+                            isFollowedByMe:false,
+                        }
+                    },
+                    {
+                        $project:{
+                            _id:1,
+                            fullName:1,
+                            username:1,
+                            avatar:1,
+                            followersCount:1,
+                            isFollowedByMe:1,
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                profile:{
+                    $first:"$profile"
+                }
+            }
+        },
+        {
+            $replaceRoot:{
+                newRoot:"$profile"
+            }
+        },
+        {
+            $match:{
+                _id:{
+                    $ne:profile._id
+                }
+            }
+        },
+        {
+            $sort:{
+                followersCount:-1
+            }
+        }
+    ])
+    const following = await Follower.aggregatePaginate(aggregate, {
+        page:parseInt(page),
+        limit:parseInt(limit)
+    });
+
+        // check if following are fetched or not
+        if (!following) {
+            throw new ApiError(500, 'Something went wrong while fetching following');
+        }
+        // return response
+        return res
+            .status(200)
+            .json(new ApiResponce(200,following, 'Following fetched successfully'));
+
+})
+
 export {
     toggleFollowUser,
     getAllFollowers,
     getAllFollowings,
+    getSuggestedProfiles,
 }
