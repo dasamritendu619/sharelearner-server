@@ -246,82 +246,58 @@ const getAllFollowings = asyncHandler(async (req, res) => {
 const getSuggestedProfiles = asyncHandler(async (req, res) => {
     const {page=1, limit=20} = req.query;
    
-    const profile = req.user;
-
-    if(!profile){
-        throw new ApiError(404, "Profile not found");
-    }
-
-    const aggregate = Follower.aggregate([
+    const aggregate = User.aggregate([
         {
-            $match: {
-                followedBy: {
-                    $ne: profile._id
-                }
+            $match:{
+                _id:{$ne:new mongoose.Types.ObjectId(req.user?._id)}
             }
         },
         {
-            $lookup: {
-                from: 'users',
-                localField: 'profile',
-                foreignField: '_id',
-                as: 'profile',
-                pipeline:[
-                    {
-                        $lookup:{
-                            from:"followers",
-                            localField:"_id",
-                            foreignField:"profile",
-                            as:"followers"
-                        }
-                    },
-                    {
-                        $addFields:{
-                            followersCount:{
-                                $size:"$followers"
-                            },
-                            isFollowedByMe:false,
-                        }
-                    },
-                    {
-                        $project:{
-                            _id:1,
-                            fullName:1,
-                            username:1,
-                            avatar:1,
-                            followersCount:1,
-                            isFollowedByMe:1,
-                        }
-                    }
-                ]
+            $lookup:{
+                from:"followers",
+                localField:"_id",
+                foreignField:"profile",
+                as:"followers"
             }
         },
         {
             $addFields:{
-                profile:{
-                    $first:"$profile"
-                }
+                followersCount:{
+                    $size:"$followers"
+                },
+                isFollowedByMe:{
+                    $cond:{
+                        if:{
+                            $in:[new mongoose.Types.ObjectId(req.user?._id),"$followers.followedBy"]
+                        },
+                        then:true,
+                        else:false
+                    }
+                },
             }
         },
         {
-            $replaceRoot:{
-                newRoot:"$profile"
+            $project:{
+                followersCount:1,
+                username:1,
+                fullName:1,
+                avatar:1,
+                isFollowedByMe:1
             }
         },
         {
             $match:{
-                _id:{
-                    $ne:profile._id
-                }
+                isFollowedByMe:false,
             }
         },
         {
             $sort:{
-                followersCount:-1
+                followersCount:-1,
             }
         }
-    ])
-    const following = await Follower.aggregatePaginate(aggregate, {
+    ]);
+
+    const following = await User.aggregatePaginate(aggregate, {
         page:parseInt(page),
         limit:parseInt(limit)
     });
