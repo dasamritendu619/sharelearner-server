@@ -50,6 +50,11 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
             $match:{savedBy:new mongoose.Types.ObjectId(req.user._id)}
         },
         {
+            $sort:{
+                createdAt:-1
+            }
+        },
+        {
             $lookup:{
                 from:"posts",
                 localField:"post",
@@ -58,27 +63,54 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
                 pipeline:[
                     {
                         $lookup:{
+                            from:"saveds",
+                            localField:"_id",
+                            foreignField:"post",
+                            as:"saved"
+                        }
+                    },
+                    {
+                        $lookup:{
                             from:"users",
                             localField:"author",
                             foreignField:"_id",
                             as:"author",
                             pipeline:[
                                 {
+                                    $lookup:{
+                                        from:"followers",
+                                        localField:"_id",
+                                        foreignField:"profile",
+                                        as:"followers"
+                                    }
+                                },
+                                {
+                                    $addFields:{
+                                        followersCount:{
+                                            $size:"$followers"
+                                        },
+                                        isFollowedByMe:{
+                                            $cond:{
+                                                if:{
+                                                    $in:[new mongoose.Types.ObjectId(req.user?._id),"$followers.followedBy"]
+                                                },
+                                                then:true,
+                                                else:false
+                                            }
+                                        },
+                                    }
+                                },
+                                {
                                     $project:{
+                                        _id:1,
                                         username:1,
+                                        fullName:1,
                                         avatar:1,
-                                        fullName:1
+                                        followersCount:1,
+                                        isFollowedByMe:1
                                     }
                                 }
                             ]
-                        }
-                    },
-                    {
-                        $lookup:{
-                            from:"comments",
-                            localField:"_id",
-                            foreignField:"post",
-                            as:"comments"
                         }
                     },
                     {
@@ -87,6 +119,14 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
                             localField:"_id",
                             foreignField:"post",
                             as:"likes"
+                        }
+                    },
+                    {
+                        $lookup:{
+                            from:"comments",
+                            localField:"_id",
+                            foreignField:"post",
+                            as:"comments"
                         }
                     },
                     {
@@ -128,24 +168,38 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
                                         }
                                     }
                                 },
+                                {
+                                    $project:{
+                                        assetURL:1,
+                                        title:1,
+                                        content:1,
+                                        type:1,
+                                        author:1,
+                                        visibility:1,
+                                        createdAt:1
+                                    }
+                                }
                             ]
                         }
                     },
                     {
                         $addFields:{
+                            likesCount:{
+                                $size:"$likes"
+                            },
+                            commentsCount:{
+                                $size:"$comments"
+                            },
+                            sharesCount:{
+                                $size:"$share"
+                            },
+                            savedCount:{
+                                $size:"$saved"
+                            },
                             author:{
                                 $arrayElemAt:["$author",0]
                             },
-                            comments:{
-                                $size:"$comments"
-                            },
-                            likes:{
-                                $size:"$likes"
-                            },
-                            shares:{
-                                $size:"$share"
-                            },
-                            isLikeByMe: {
+                            isLikedByMe:{
                                 $cond: {
                                     if: {
                                         $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.likedBy"]
@@ -154,6 +208,7 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
                                     else: false
                                 }
                             },
+                            isSavedByMe:true,
                             forkedFrom:{
                                 $arrayElemAt:["$forkedFrom",0]
                             }
@@ -161,9 +216,10 @@ const getSavedPosts = asyncHandler(async(req,res)=>{
                     },
                     {
                         $project:{
-                            comments:0,
                             likes:0,
-                            share:0
+                            comments:0,
+                            share:0,
+                            saved:0
                         }
                     }
                 ]
