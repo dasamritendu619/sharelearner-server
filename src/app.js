@@ -26,6 +26,7 @@ import replyRoute from "./routes/reply.route.js";
 import savedRoute from "./routes/saved.route.js";
 import groupRoute from "./routes/group.route.js";
 import memberRoute from "./routes/member.route.js";
+import  searchRoute from "./routes/search.route.js";
 
 // use routes
 app.use("/api/v1/user",userRoute);
@@ -38,6 +39,7 @@ app.use("/api/v1/reply",replyRoute);
 app.use("/api/v1/saved",savedRoute);
 app.use("/api/v1/group",groupRoute);
 app.use("/api/v1/member",memberRoute);
+app.use("/api/v1/search",searchRoute);
 
 app.use(errorHandler);
 export default app;
