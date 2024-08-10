@@ -4,7 +4,7 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 const postSchema = new mongoose.Schema({
     title: {
         type: String,
-        text: "index"
+        index:"text",
     },
     content:{
         type: String

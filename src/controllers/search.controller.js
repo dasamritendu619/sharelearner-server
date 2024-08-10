@@ -83,7 +83,7 @@ const searchUser = asyncHandler(async (req, res) => {
                 $or: [
                     {
                         $text: {
-                            $search: query,
+                            $search: query
                         },
                     },
                     {
@@ -194,9 +194,16 @@ const searchPosts = asyncHandler(async (req, res) => {
     const aggregate = Post.aggregate([
         {
             $match: {
-                $text: {
-                    $search: query,
-                },
+                $and: [
+                    {
+                        $text: {
+                            $search: query
+                        },
+                    },
+                    {
+                        visibility: "public"
+                    },
+                ],
             },
         },
         {
@@ -228,7 +235,6 @@ const searchPosts = asyncHandler(async (req, res) => {
                                 $size: "$followers"
                             },
                             isFollowedByMe: isFollowedByMe
-
                         }
                     },
                     {
