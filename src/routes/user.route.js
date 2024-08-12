@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { verifyJWT,checkCurrentUser} from "../middlewares/auth.middleware.js";
+import upload from "../middlewares/multer.middleware.js";
 import {
     registerUser,
     verifyUser,
@@ -35,8 +36,8 @@ router.route("/verify-reset-password").patch(verifyResetPassword);
 router.route("/update-email").post(verifyJWT,sendEmailForUpdateEmailRequest);
 router.route("/verify-change-email").post(verifyJWT,verifyChangeEmail);
 router.route("/update-details").patch(verifyJWT,updateUserDetails);
-router.route("/update-avatar").patch(verifyJWT,updateAvatar);
-router.route("/update-cover-photo").patch(verifyJWT,updateCoverPhoto);
+router.route("/update-avatar").patch(verifyJWT,upload.single("avatar"),updateAvatar);
+router.route("/update-cover-photo").patch(verifyJWT,upload.single("coverPhoto"),updateCoverPhoto);
 router.route("/check-username/:username").get(checkUserNameAvialability);
 router.route("/me/details").get(verifyJWT,getCurrentUserDetails);
 router.route("/:username").get(checkCurrentUser,getProfile);

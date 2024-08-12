@@ -4,8 +4,8 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponce } from "../utils/ApiResponse.js";
 import { sendMail } from "../utils/resend.js";
-import { DEFAULT_AVATAR,DEFAULT_COVER_PHOTO} from "../constants.js" 
-import {deleteFromCloudinary} from "../utils/cloudinary.js";
+import { DEFAULT_AVATAR, DEFAULT_COVER_PHOTO } from "../constants.js"
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 
 function isStrongPassword(password) {
@@ -152,7 +152,7 @@ const verifyUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Identifier is required");
     }
     // find user by otp
-    const user = await User.findOne({ loginOTP: otp, $or: [{ email: identifier }, { username: identifier }]}).select("-password");
+    const user = await User.findOne({ loginOTP: otp, $or: [{ email: identifier }, { username: identifier }] }).select("-password");
     // if user not found
     if (!user) {
         throw new ApiError(404, "Invalid OTP ");
@@ -242,11 +242,11 @@ const loginUser = asyncHandler(async (req, res) => {
     // send response
     return res
         .status(200)
-        .json(new ApiResponce(200, {}, "OTP sent to your email"));    
+        .json(new ApiResponce(200, {}, "OTP sent to your email"));
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-    if (!req.user || ! req.refreshToken) {
+    if (!req.user || !req.refreshToken) {
         throw new ApiError(401, "Unauthorized");
     }
     const { fromAllDervice = "" } = req.query;
@@ -279,7 +279,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const refreshToken=req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ","").split(" ")[1];
+    const refreshToken = req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ", "").split(" ")[1];
     if (!refreshToken) {
         throw new ApiError(401, "Unauthorized");
     }
@@ -287,7 +287,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (!decodedToken) {
         throw new ApiError(403, "Unauthorized request");
     }
-    const user=await User.findOne({$and:[{_id:new mongoose.Types.ObjectId(decodedToken?._id)},{refreshToken:refreshToken}]}).select("-password -refreshToken");
+    const user = await User.findOne({ $and: [{ _id: new mongoose.Types.ObjectId(decodedToken?._id) }, { refreshToken: refreshToken }] }).select("-password -refreshToken");
     // check if user exists
     if (!user) {
         throw new ApiError(403, "Unauthorized request");
@@ -309,7 +309,7 @@ const changePassword = asyncHandler(async (req, res) => {
     if (!oldPassword || !newPassword) {
         throw new ApiError(400, "All fields are required");
     }
-    if(oldPassword===newPassword){
+    if (oldPassword === newPassword) {
         throw new ApiError(400, "Old password and new password cannot be same");
     }
     const passwordError = isStrongPassword(newPassword);
@@ -323,7 +323,7 @@ const changePassword = asyncHandler(async (req, res) => {
     }
     user.password = newPassword;
     user.refreshToken = [req.refreshToken];
-    const savedUser=await user.save();
+    const savedUser = await user.save();
     if (!savedUser) {
         throw new ApiError(500, "Something went wrong while changing password");
     }
@@ -338,7 +338,7 @@ const sendForgotPasswordByEmail = asyncHandler(async (req, res) => {
     if (!email) {
         throw new ApiError(400, "Email is required");
     }
-    const user=await User.findOne({email});
+    const user = await User.findOne({ email });
     if (!user) {
         throw new ApiError(404, "User not found");
     }
@@ -386,16 +386,16 @@ const verifyResetPassword = asyncHandler(async (req, res) => {
 });
 
 
-const sendEmailForUpdateEmailRequest= asyncHandler(async (req, res) => {
+const sendEmailForUpdateEmailRequest = asyncHandler(async (req, res) => {
     const { email } = req.body;
     if (!email) {
         throw new ApiError(400, "Email is required");
     }
-    const user=await User.findById(req.user._id);
+    const user = await User.findById(req.user._id);
     if (!user) {
         throw new ApiError(404, "User not found");
     }
-    const existed=await User.findOne({email});
+    const existed = await User.findOne({ email });
     if (existed) {
         throw new ApiError(400, "User with Same Email already exists");
     }
@@ -418,14 +418,14 @@ const verifyChangeEmail = asyncHandler(async (req, res) => {
     if (!otp || !email) {
         throw new ApiError(400, "All fields are required");
     }
-    const user = await User.findOne({ emailVerificationOTP: otp, changedEmail: email,email: req.user?.email});
+    const user = await User.findOne({ emailVerificationOTP: otp, changedEmail: email, email: req.user?.email });
     if (!user) {
         throw new ApiError(404, "Invalid OTP");
     }
     if (user.emailVerificationExpires < Date.now()) {
         throw new ApiError(400, "OTP expired");
     }
-    
+
     const updatedUser = await User.findByIdAndUpdate(
         user._id,
         {
@@ -445,25 +445,25 @@ const verifyChangeEmail = asyncHandler(async (req, res) => {
         .json(new ApiResponce(200, {}, "Email changed successfully"));
 });
 
-const updateUserDetails=asyncHandler(async (req,res)=>{
-    const {fullName,dob,gender,education,about,address,links,interest}=req.body;
+const updateUserDetails = asyncHandler(async (req, res) => {
+    const { fullName, dob, gender, education, about, address, links, interest } = req.body;
     if (!fullName && !dob && !gender && !education && !about && !address && !links && !interest) {
         throw new ApiError(400, "Atleast one field is required");
     }
-    
-    const user=await User.findById(req.user._id);
+
+    const user = await User.findById(req.user._id);
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    user.fullName=fullName || user.fullName;
-    user.dob=dob ? new Date(dob) : user.dob;
-    user.gender=gender || user.gender;
-    user.education=education || user.education;
-    user.about=about || user.about;
-    user.address=address || user.address;
-    user.links=links || user.links;
-    user.interest=interest || user.interest;
+    user.fullName = fullName || user.fullName;
+    user.dob = dob ? new Date(dob) : user.dob;
+    user.gender = gender || user.gender;
+    user.education = education || user.education;
+    user.about = about || user.about;
+    user.address = address || user.address;
+    user.links = links || user.links;
+    user.interest = interest || user.interest;
 
     const updatedUser = await user.save();
     if (!updatedUser) {
@@ -474,23 +474,36 @@ const updateUserDetails=asyncHandler(async (req,res)=>{
         .json(new ApiResponce(200, updatedUser, "User details updated successfully"));
 });
 
-const updateAvatar=asyncHandler(async (req,res)=>{
-    const {avatarUrl}=req.body;
-    if (!avatarUrl) {
-        throw new ApiError(400, "Avatar URL is required");
+const updateAvatar = asyncHandler(async (req, res) => {
+
+    const imageFilePath = req.file?.path;
+    if (!imageFilePath) {
+        throw new ApiError(400, "Image is required to update avatar");
     }
-    const user=await User.findById(req.user._id);
+
+    const user = await User.findById(req.user._id);
     if (!user) {
         throw new ApiError(404, "User not found");
     }
+
+    const uploadedImage = await uploadOnCloudinary(imageFilePath);
+    if (!uploadedImage) {
+        throw new ApiError(500, "Failed to upload image on cloudinary");
+    }
+    const avatarUrl = uploadedImage.secure_url;
+
+    if (!avatarUrl) {
+        throw new ApiError(500, "Something went wrong while uploading image");
+    }
+
     // img.split("upload/")[1].split(".")[0]
-    if(user.avatar!==DEFAULT_AVATAR){
-        const deletedImage=await deleteFromCloudinary(user.avatar.split("upload/")[1].split(".")[0]);
+    if (user.avatar !== DEFAULT_AVATAR) {
+        const deletedImage = await deleteFromCloudinary(user.avatar.split("upload/")[1].split(".")[0]);
         if (!deletedImage) {
-            throw new ApiError(500, "Something went wrong while deleting image");
+            throw new ApiError(500, "Something went wrong while deleting previous image");
         }
     }
-    user.avatar=avatarUrl;
+    user.avatar = avatarUrl;
     const updatedUser = await user.save();
     if (!updatedUser) {
         throw new ApiError(500, "Something went wrong while updating user");
@@ -498,34 +511,44 @@ const updateAvatar=asyncHandler(async (req,res)=>{
 
     return res
         .status(200)
-        .json(new ApiResponce(200, {}, "Avatar updated successfully"));
+        .json(new ApiResponce(200, {avatar:avatarUrl}, "Avatar updated successfully"));
 });
 
-const updateCoverPhoto=asyncHandler(async (req,res)=>{
-    const {coverPhotoUrl}=req.body;
-    if (!coverPhotoUrl) {
-        throw new ApiError(400, "Cover Photo URL is required");
+const updateCoverPhoto = asyncHandler(async (req, res) => {
+    const imageFilePath = req.file?.path;
+    if (!imageFilePath) {
+        throw new ApiError(400, "Image is required to update cover photo");
     }
-    const user=await User.findById(req.user._id);
 
+    const user = await User.findById(req.user._id);
     if (!user) {
         throw new ApiError(404, "User not found");
     }
 
-    if(user.coverPhoto!==DEFAULT_COVER_PHOTO){
-        const deletedImage=await deleteFromCloudinary(user.coverPhoto.split("upload/")[1].split(".")[0]);
+    const uploadedImage = await uploadOnCloudinary(imageFilePath);
+    if (!uploadedImage) {
+        throw new ApiError(500, "Failed to upload image on cloudinary");
+    }
+    const coverPhotoUrl = uploadedImage.secure_url;
+
+    if (!coverPhotoUrl) {
+        throw new ApiError(500, "Something went wrong while uploading image");
+    }
+
+    if (user.coverPhoto !== DEFAULT_COVER_PHOTO) {
+        const deletedImage = await deleteFromCloudinary(user.coverPhoto.split("upload/")[1].split(".")[0]);
         if (!deletedImage) {
             throw new ApiError(500, "Something went wrong while deleting image");
         }
     }
-    user.coverPhoto=coverPhotoUrl;
+    user.coverPhoto = coverPhotoUrl;
     const updatedUser = await user.save();
     if (!updatedUser) {
         throw new ApiError(500, "Something went wrong while updating user");
     }
     return res
         .status(200)
-        .json(new ApiResponce(200, {}, "Cover photo updated successfully"));
+        .json(new ApiResponce(200, {coverPhoto:coverPhotoUrl}, "Cover photo updated successfully"));
 
 });
 
@@ -546,15 +569,15 @@ const updateCoverPhoto=asyncHandler(async (req,res)=>{
 //     if (!deletedUser) {
 //         throw new ApiError(500, "Something went wrong while deleting user");
 //     }
-    
+
 // });
 
-const checkUserNameAvialability=asyncHandler(async (req,res)=>{
-    const {username}  = req.params;
+const checkUserNameAvialability = asyncHandler(async (req, res) => {
+    const { username } = req.params;
     if (!username) {
         throw new ApiError(400, "Username is required");
     }
-    const user=await User.findOne({username});
+    const user = await User.findOne({ username });
     if (user) {
         throw new ApiError(400, "Username already taken");
     }
@@ -585,12 +608,12 @@ const getProfile = asyncHandler(async (req, res) => {
     let isFollowedByMe = false;
     if (req.user) {
         isFollowedByMe = {
-            $cond:{
-                if:{
-                    $in:[new mongoose.Types.ObjectId(req.user?._id),"$followers.followedBy"]
+            $cond: {
+                if: {
+                    $in: [new mongoose.Types.ObjectId(req.user?._id), "$followers.followedBy"]
                 },
-                then:true,
-                else:false
+                then: true,
+                else: false
             }
         };
     }
@@ -608,53 +631,53 @@ const getProfile = asyncHandler(async (req, res) => {
             }
         },
         {
-            $lookup:{
-                from:"followers",
-                localField:"_id",
-                foreignField:"profile",
-                as:"followers"
+            $lookup: {
+                from: "followers",
+                localField: "_id",
+                foreignField: "profile",
+                as: "followers"
             }
         },
         {
-            $lookup:{
-                from:"followers",
-                localField:"_id",
-                foreignField:"followedBy",
-                as:"followings"
+            $lookup: {
+                from: "followers",
+                localField: "_id",
+                foreignField: "followedBy",
+                as: "followings"
             }
         },
         {
-            $addFields:{
-                followersCount:{
-                    $size:"$followers"
+            $addFields: {
+                followersCount: {
+                    $size: "$followers"
                 },
-                followingsCount:{
-                    $size:"$followings"
+                followingsCount: {
+                    $size: "$followings"
                 },
-                postsCount:{
-                    $size:"$posts"
+                postsCount: {
+                    $size: "$posts"
                 },
-                isFollowedByMe:isFollowedByMe
+                isFollowedByMe: isFollowedByMe
             }
         },
         {
-            $project:{
-                username:1,
-                fullName:1,
-                dob:1,
-                interest:1,
-                links:1,
-                avatar:1,
-                coverPhoto:1,
-                education:1,
-                about:1,
-                address:1,
-                followersCount:1,
-                followingsCount:1,
-                postsCount:1,
-                isFollowedByMe:1,
-                gender:1,
-                createdAt:1,
+            $project: {
+                username: 1,
+                fullName: 1,
+                dob: 1,
+                interest: 1,
+                links: 1,
+                avatar: 1,
+                coverPhoto: 1,
+                education: 1,
+                about: 1,
+                address: 1,
+                followersCount: 1,
+                followingsCount: 1,
+                postsCount: 1,
+                isFollowedByMe: 1,
+                gender: 1,
+                createdAt: 1,
             }
         }
     ])
