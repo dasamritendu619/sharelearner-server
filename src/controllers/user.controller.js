@@ -575,6 +575,100 @@ const getCurrentUserDetails = asyncHandler(async (req, res) => {
         .json(new ApiResponce(200, user, "User found"));
 })
 
+const getProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    if (!username) {
+        throw new ApiError(400, "Username is required");
+    }
+
+    let isFollowedByMe = false;
+    if (req.user) {
+        isFollowedByMe = {
+            $cond:{
+                if:{
+                    $in:[new mongoose.Types.ObjectId(req.user?._id),"$followers.followedBy"]
+                },
+                then:true,
+                else:false
+            }
+        };
+    }
+
+    const user = await User.aggregate([
+        {
+            $match: { username: username }
+        },
+        {
+            $lookup: {
+                from: "posts",
+                localField: "_id",
+                foreignField: "author",
+                as: "posts"
+            }
+        },
+        {
+            $lookup:{
+                from:"followers",
+                localField:"_id",
+                foreignField:"profile",
+                as:"followers"
+            }
+        },
+        {
+            $lookup:{
+                from:"followers",
+                localField:"_id",
+                foreignField:"followedBy",
+                as:"followings"
+            }
+        },
+        {
+            $addFields:{
+                followersCount:{
+                    $size:"$followers"
+                },
+                followingsCount:{
+                    $size:"$followings"
+                },
+                postsCount:{
+                    $size:"$posts"
+                },
+                isFollowedByMe:isFollowedByMe
+            }
+        },
+        {
+            $project:{
+                username:1,
+                fullName:1,
+                dob:1,
+                interest:1,
+                links:1,
+                avatar:1,
+                coverPhoto:1,
+                education:1,
+                about:1,
+                address:1,
+                followersCount:1,
+                followingsCount:1,
+                postsCount:1,
+                isFollowedByMe:1,
+                gender:1,
+                createdAt:1,
+            }
+        }
+    ])
+
+    if (!user || user.length === 0) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponce(200, user[0], "User found"));
+
+});
+
 export {
     registerUser,
     verifyUser,
@@ -592,4 +686,5 @@ export {
     updateCoverPhoto,
     checkUserNameAvialability,
     getCurrentUserDetails,
+    getProfile,
 }

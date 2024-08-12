@@ -17,6 +17,7 @@ import {
     updateCoverPhoto,
     checkUserNameAvialability,
     getCurrentUserDetails,
+    getProfile,
 } 
 from "../controllers/user.controller.js";
 
@@ -38,5 +39,6 @@ router.route("/update-avatar").patch(verifyJWT,updateAvatar);
 router.route("/update-cover-photo").patch(verifyJWT,updateCoverPhoto);
 router.route("/check-username/:username").get(checkUserNameAvialability);
 router.route("/me/details").get(verifyJWT,getCurrentUserDetails);
+router.route("/:username").get(checkCurrentUser,getProfile);
 
 export default router;

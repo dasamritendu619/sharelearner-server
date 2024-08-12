@@ -665,6 +665,195 @@ const getAllPosts = asyncHandler(async (req, res) => {
 });
 
 
+const getProfilePosts = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+    const { page=1,limit=10,type='all'} = req.query;
+    const visibility = "public";
+
+    const user = await User.findOne({username:username});
+    if(!user){
+        throw new ApiError(404, "User not found");
+    }
+
+    let isLikedByMe = false;
+    let isSavedByMe = false;
+    let match = {
+        $match:{
+            author: user._id,
+            type:{
+                $in:["photo","video","pdf","blog","forked"]
+            },
+            visibility:visibility
+        }
+    };
+    if(req.user){
+        isLikedByMe = {
+            $cond: {
+                if: {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.likedBy"]
+                },
+                then: true,
+                else: false
+            }
+        };
+        isSavedByMe = {
+            $cond: {
+                if: {
+                    $in: [new mongoose.Types.ObjectId(req.user._id), "$saved.savedBy"]
+                },
+                then: true,
+                else: false
+            }
+        }
+    }
+
+    if(type === "photo" || type === "video" || type === "pdf" || type === "blog" || type === "forked"){
+        match = {
+            $match:{
+                author: user._id,
+                type:type,
+                visibility:visibility
+            }
+        };
+    } else if(type === "private"){
+        match = {
+            $match:{
+                author: user._id,
+                visibility:"private"
+            }
+        };
+    }
+
+    const aggregrate = Post.aggregate([
+        match,
+        {
+            $sort:{
+                createdAt:-1
+            }
+        },
+        {
+            $lookup:{
+                from:"saveds",
+                localField:"_id",
+                foreignField:"post",
+                as:"saved"
+            }
+        },
+        {
+            $lookup:{
+                from:"likes",
+                localField:"_id",
+                foreignField:"post",
+                as:"likes"
+            }
+        },
+        {
+            $lookup:{
+                from:"comments",
+                localField:"_id",
+                foreignField:"post",
+                as:"comments"
+            }
+        },
+        {
+            $lookup:{
+                from:"posts",
+                localField:"_id",
+                foreignField:"forkedFrom",
+                as:"share"
+            }
+        },
+        {
+            $lookup:{
+                from:"posts",
+                localField:"forkedFrom",
+                foreignField:"_id",
+                as:"forkedFrom",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"author",
+                            foreignField:"_id",
+                            as:"author",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        username:1,
+                                        avatar:1,
+                                        fullName:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            author:{
+                                $arrayElemAt:["$author",0]
+                            }
+                        }
+                    },
+                    {
+                        $project:{
+                            assetURL:1,
+                            title:1,
+                            content:1,
+                            type:1,
+                            author:1,
+                            visibility:1,
+                            createdAt:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                likesCount:{
+                    $size:"$likes"
+                },
+                commentsCount:{
+                    $size:"$comments"
+                },
+                sharesCount:{
+                    $size:"$share"
+                },
+                savedCount:{
+                    $size:"$saved"
+                },
+                isLikedByMe:isLikedByMe,
+                isSavedByMe:isSavedByMe,
+                forkedFrom:{
+                    $arrayElemAt:["$forkedFrom",0]
+                }
+            }
+        },
+        {
+            $project:{
+                likes:0,
+                comments:0,
+                share:0,
+                saved:0
+            }
+        }
+        
+    ]);
+    const options = {
+        page:parseInt(page,10),
+        limit:parseInt(limit,10)
+    };
+    const posts = await Post.aggregatePaginate(aggregrate,options);
+    if(!posts){
+        throw new ApiError(404, "Posts not found");
+    }
+    return res
+    .status(200)
+    .json(new ApiResponce(200,posts, "Posts fetched successfully"));
+
+});
+
+
 
 export {
     createPost,
@@ -674,4 +863,5 @@ export {
     getPost,
     getAllPosts,
     getPostDetailsForUpdate,
+    getProfilePosts,
 }
