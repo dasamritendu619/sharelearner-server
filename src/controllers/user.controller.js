@@ -697,7 +697,7 @@ const getOtherUsers = asyncHandler( async(req,res)=>{
     console.log(req.user._id);
     const mongoose = require('mongoose');
     const objectId = mongoose.Types.ObjectId(loggedInUserId);
-    const otherUsers = await User.find({ _id: { $ne: loggedInUserId } });
+    const otherUsers = await User.find({ _id: { $ne: objectId } });
     console.log('Other Users:', otherUsers);
     return res.status(200).json(
         new ApiResponce(200,otherUsers)
