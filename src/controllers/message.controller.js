@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandeler.js";
 import { Conversation} from "../models/conversation.model.js"
 import { Message } from "../models/message.model.js"
 import { getReceiverSocketId, io } from "../socket/socket.js";
+import mongoose from 'mongoose';
 
 const sendMessage = asyncHandler(async(req,res)=>{
     const loggedInUserId = req.user._id;
