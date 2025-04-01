@@ -6,9 +6,12 @@ import { Message } from "../models/message.model.js"
 import { getReceiverSocketId, io } from "../socket/socket.js";
 
 const sendMessage = asyncHandler(async(req,res)=>{
-    const senderId = req.user._id;
-    const receiverId = req.params.id;
-    const {message} = req.body;
+    const loggedInUserId = req.user._id;
+    const { receiverId } = req.params;
+    const { message } = req.body;
+
+    const senderId = new mongoose.Types.ObjectId(loggedInUserId);
+
     let gotConversation = await Conversation.findOne({
         participants:{$all:[senderId,receiverId]},
     })
@@ -41,8 +44,10 @@ const sendMessage = asyncHandler(async(req,res)=>{
 })
 
 const getMessage = asyncHandler(async(req,res)=>{
-    const receiverId = req.params.id;
-    const senderId = req.user._id;
+    const { receiverId } = req.params;
+    const loggedInUserId = req.user._id;
+
+    const senderId = new mongoose.Types.ObjectId(loggedInUserId);
 
     let gotConversation = await Conversation.findOne({
         participants:{$all : [senderId, receiverId]},
